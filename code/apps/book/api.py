@@ -12,7 +12,9 @@ from .serializers import (
     BorrowCreateSchema
 )
 
+from django.contrib.auth import authenticate
 from datetime import datetime
+from rest_framework_simplejwt.tokens import RefreshToken
 
 router = Router()
 
@@ -25,7 +27,41 @@ class BookFilter(Schema):
     borrowed_by: Optional[str] = None
     borrowed: Optional[bool] = None
 
-@router.get("/books",)
+
+
+"""AUTH ROUTER"""
+
+auth_router = Router()
+
+@auth_router.post("/token")
+def get_token(request, username: str, password: str):
+    user = authenticate(username=username, password=password)
+
+    if user:
+        refresh = RefreshToken.for_user(user)
+        return {
+            "refresh": str(refresh),
+            "access": str(refresh.access_token),
+        }
+    return {"error": "Invalid credentials"}, 401
+
+from ninja.security import HttpBearer
+from rest_framework_simplejwt.authentication import JWTAuthentication
+
+class JWTBearer(HttpBearer):
+    def authenticate(self, request, token):
+        try:
+            auth = JWTAuthentication()
+            validated_token = auth.get_validated_token(token)
+            user = auth.get_user(validated_token)
+            return user
+        except Exception as e:
+            print(f"Authentication failed: {e}")
+            return None
+"""AUTH ROUTER"""
+
+
+@router.get("/books", auth=JWTBearer())
 def get_books(request, filters: BookFilter = Query(...)):
     books = Book.objects.all()
 

@@ -3,7 +3,7 @@ from django.contrib.auth.decorators import user_passes_test
 from ninja import NinjaAPI
 
 from apps.book.api import router as BookRouter
-
+from apps.book.api import auth_router as AuthRouter
 
 # from apps.module.api import router as ModuleRouter
 # from apps.user.api import router as UserRouter
@@ -33,3 +33,4 @@ api = NinjaAPI(
 
 
 api.add_router("/library/", BookRouter, tags=["Books & Borrowing"])
+api.add_router("/auth/", AuthRouter, tags=["Security"])
